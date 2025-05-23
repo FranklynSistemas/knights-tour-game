@@ -1,0 +1,5 @@
+{
+  "name": "Knight's Tour Game",
+  "description": "An interactive game where the player guides a knight to visit every square on a grid using valid knight moves.",
+  "requestFramePermissions": []
+}
