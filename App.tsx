@@ -7,8 +7,8 @@ import { InGameControls } from './components/InGameControls';
 import { GameGrid } from './components/GameGrid';
 import { GameOverModal } from './components/GameOverMolda';
 
-const MIN_GRID_SIZE = 3;
-const MAX_GRID_SIZE = 10;
+const MIN_GRID_SIZE = 5;
+const MAX_GRID_SIZE = 12;
 
 const App: React.FC = () => {
   const [gridSize, setGridSize] = useState<number>(5);
