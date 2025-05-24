@@ -9,7 +9,6 @@ interface CellProps {
   onClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
-  gridSize: number; // Added gridSize to determine cell dimensions
 }
 
 const Cell: React.FC<CellProps> = ({
@@ -19,19 +18,10 @@ const Cell: React.FC<CellProps> = ({
   onClick,
   onMouseEnter,
   onMouseLeave,
-  gridSize,
 }) => {
-  let sizeClasses: string;
+ 
 
-  if (gridSize < 6) {
-    // For smaller grids (3x3, 4x4, 5x5), use smaller cells
-    sizeClasses = "w-10 h-10 md:w-12 md:h-12"; // 40px base, 48px on md+
-  } else {
-    // For larger grids (6x6 to 10x10), use slightly larger cells
-    sizeClasses = "w-12 h-12 md:w-14 md:h-14"; // 48px base, 56px on md+
-  }
-
-  let cellClasses = `${sizeClasses} border border-gray-300 flex items-center justify-center cursor-pointer transition-all duration-150 ease-in-out`;
+  let cellClasses = `aspect-square w-full border border-gray-300 flex items-center justify-center cursor-pointer transition-all duration-150 ease-in-out`;
   let knightColor = "text-gray-700"; // Default for highlighted empty cell
 
   if (isAtKnightPos || status === CellBaseStatus.VISITED) {

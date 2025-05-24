@@ -1,7 +1,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+
 import { CellBaseStatus, Position } from './types';
-import Cell from './components/Cell';
+import { GameSetupControls } from './components/GameSetupControls';
+import { InGameControls } from './components/InGameControls';
+import { GameGrid } from './components/GameGrid';
+import { GameOverModal } from './components/GameOverMolda';
 
 const MIN_GRID_SIZE = 3;
 const MAX_GRID_SIZE = 10;
@@ -12,12 +16,13 @@ const App: React.FC = () => {
   const [knightPos, setKnightPos] = useState<Position | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<Position[]>([]);
   const [hoveredPossibleCell, setHoveredPossibleCell] = useState<Position | null>(null);
-  
+
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [visitedCount, setVisitedCount] = useState<number>(0);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [winMessage, setWinMessage] = useState<string>('');
+  const [gameOverReason, setGameOverReason] = useState<'win' | 'fail'>('win');
 
   const initializeGrid = useCallback((size: number): CellBaseStatus[][] => {
     return Array(size).fill(null).map(() => Array(size).fill(CellBaseStatus.EMPTY));
@@ -80,9 +85,11 @@ const App: React.FC = () => {
       if (visitedCount > 0 && visitedCount === gridSize * gridSize) {
         setGameOver(true);
         setWinMessage(`Congratulations! You completed the tour in ${elapsedTime} seconds on a ${gridSize}x${gridSize} grid!`);
+        setGameOverReason('win');
       } else if (newMoves.length === 0 && visitedCount < gridSize * gridSize && visitedCount > 0) { // Added visitedCount > 0 to ensure knight was placed
         setGameOver(true);
         setWinMessage(`No more moves possible. You visited ${visitedCount} out of ${gridSize * gridSize} squares.`);
+        setGameOverReason('fail');
       }
     } else { // Knight not placed yet
       const initialPlacements: Position[] = [];
@@ -95,7 +102,7 @@ const App: React.FC = () => {
       });
       setPossibleMoves(initialPlacements);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [knightPos, gridState, gameStarted, gameOver, gridSize, visitedCount, elapsedTime, getPossibleKnightMoves]);
 
 
@@ -157,110 +164,46 @@ const App: React.FC = () => {
       <div className="bg-gray-700 p-6 md:p-8 rounded-xl shadow-2xl w-full max-w-max">
         <h1 className="text-3xl md:text-4xl font-bold text-center text-yellow-400 mb-6">Knight's Tour Game</h1>
 
-        {/* Game Setup Controls: Visible before game starts or after game over */}
-        {(!gameStarted || gameOver) && (
-          <div className="mb-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <div className="flex items-center gap-2">
-              <label htmlFor="gridSizeSelect" className="text-lg text-gray-300">Grid Size:</label>
-              <select
-                id="gridSizeSelect"
-                value={gridSize}
-                onChange={handleSizeChange}
-                disabled={gameStarted && !gameOver} // Disabled during an active game
-                className="bg-gray-600 border border-gray-500 text-white text-lg rounded-md p-2 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none"
-                aria-label="Select grid size"
-              >
-                {gridSizesOptions.map(size => (
-                  <option key={size} value={size}>{size}x{size}</option>
-                ))}
-              </select>
-            </div>
-            <button
-              onClick={handleStartGame}
-              className="bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-semibold py-2 px-6 rounded-md text-lg transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50"
-            >
-              {gameOver ? 'Play Again' : 'Start Game'}
-            </button>
-          </div>
-        )}
-        
-        {/* In-Game Information and Controls: Visible during an active game */}
-        {gameStarted && !gameOver && (
-           <div className="mb-6 flex flex-col items-center gap-4">
-            <div className="text-center text-lg text-gray-300 mb-2" aria-live="assertive">
-              Playing on a {gridSize}x{gridSize} Grid
-            </div>
-            <div className="text-center text-2xl font-mono text-yellow-400" aria-live="polite">
-              Time: {formatTime(elapsedTime)} | Visited: {visitedCount}/{gridSize*gridSize}
-            </div>
-            <div className="flex gap-3"> {/* Container for Restart and Exit buttons */}
-              <button
-                onClick={handleStartGame} // Re-uses handleStartGame for restart functionality
-                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md text-md transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50"
-              >
-                Restart Game
-              </button>
-              <button
-                onClick={handleExitGame}
-                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-md text-md transition-colors shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
-              >
-                Exit Game
-              </button>
-            </div>
-           </div>
-        )}
+        <GameSetupControls
+          gridSize={gridSize}
+          gameOver={gameOver}
+          gameStarted={gameStarted}
+          onStartGame={handleStartGame}
+          onExitGame={handleExitGame}
+          handleSizeChange={handleSizeChange}
+          gridSizesOptions={gridSizesOptions}
+        />
+        <InGameControls
+          gameStarted={gameStarted}
+          gameOver={gameOver}
+          gridSize={gridSize}
+          elapsedTime={elapsedTime}
+          visitedCount={visitedCount}
+          formatTime={formatTime}
+          handleStartGame={handleStartGame}
+          handleExitGame={handleExitGame} />
+        <GameGrid
+          gridSize={gridSize}
+          gridState={gridState}
+          gameStarted={gameStarted}
+          gameOver={gameOver}
+          knightPos={knightPos}
+          possibleMoves={possibleMoves}
+          setHoveredPossibleCell={setHoveredPossibleCell}
+          hoveredPossibleCell={hoveredPossibleCell}
+          handleCellClick={handleCellClick}
+        />
 
-        {/* Grid Display */}
-        {gridState.length > 0 && (
-          <div 
-            className="grid gap-0 bg-gray-600 p-1 rounded-md shadow-inner"
-            style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}
-            aria-label={`Game grid ${gridSize} by ${gridSize}`}
-            role="grid"
-          >
-            {gridState.map((rowArray, rowIndex) =>
-              rowArray.map((cellStatus, colIndex) => {
-                const currentCellPos = { row: rowIndex, col: colIndex };
-                const isKnightHere = knightPos?.row === rowIndex && knightPos?.col === colIndex;
-                
-                // Determine if cell is a potential target for movement or initial placement
-                const isPotentialTarget = gameStarted && !gameOver && (
-                  (!knightPos && cellStatus === CellBaseStatus.EMPTY) || // For initial placement
-                  (knightPos && possibleMoves.some(p => p.row === currentCellPos.row && p.col === currentCellPos.col) && cellStatus === CellBaseStatus.EMPTY) // For subsequent moves
-                );
-                
-                const cellIsHighlightedByMouse = isPotentialTarget && hoveredPossibleCell?.row === rowIndex && hoveredPossibleCell?.col === colIndex;
-
-                return (
-                  <Cell
-                    key={`${rowIndex}-${colIndex}`}
-                    status={cellStatus}
-                    isAtKnightPos={isKnightHere}
-                    isHighlightedByMouse={cellIsHighlightedByMouse}
-                    onClick={() => handleCellClick(rowIndex, colIndex)}
-                    onMouseEnter={() => {
-                      if (isPotentialTarget) setHoveredPossibleCell(currentCellPos);
-                    }}
-                    onMouseLeave={() => {
-                      // Only clear hover if this cell was the one being hovered
-                      if (hoveredPossibleCell?.row === rowIndex && hoveredPossibleCell?.col === colIndex) {
-                        setHoveredPossibleCell(null);
-                      }
-                    }}
-                    gridSize={gridSize} // Pass gridSize to Cell
-                  />
-                );
-              })
-            )}
-          </div>
-        )}
-        
-        {/* Game Over Message */}
         {gameOver && winMessage && (
-          <p className="mt-6 text-center text-xl text-yellow-400 bg-gray-600 p-4 rounded-md" role="alert">{winMessage}</p>
+         <GameOverModal
+            message={winMessage}
+            type={gameOverReason}
+            onClose={handleExitGame}
+          />
         )}
       </div>
-       <footer className="text-center text-gray-400 mt-8 text-sm">
+
+      <footer className="text-center text-gray-400 mt-8 text-sm">
         <p>A Knight's Tour Game. Try to visit every square on the board!</p>
         <p>&copy; {new Date().getFullYear()} AI Generated App</p>
       </footer>
