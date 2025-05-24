@@ -46,7 +46,7 @@ const Cell: React.FC<CellProps> = ({
       aria-label={`Cell ${status === CellBaseStatus.VISITED ? 'visited' : 'empty'}`}
     >
       {showKnightFigure && (
-        <span className={`text-2xl md:text-3xl select-none ${knightColor}`}>♘</span>
+        <span className={`text-xl leading-tight md:text-3xl md:leading-snug select-none ${knightColor}`}>♘</span>
       )}
     </div>
   );
